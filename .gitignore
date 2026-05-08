@@ -1,0 +1,20 @@
+# Biozone reference scans — copyrighted material, not for public distribution
+Page*.jpg
+Page*.png
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+desktop.ini
+*~
+*.swp
+.vscode/
+.idea/
+
+# Local backups
+*.bak
+*.orig
+*.tmp
+
+# Claude / agent session metadata
+.claude/
