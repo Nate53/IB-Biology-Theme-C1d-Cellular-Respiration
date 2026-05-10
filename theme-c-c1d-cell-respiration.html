@@ -38,6 +38,9 @@ button{font-family:inherit;cursor:pointer}
 .lang-toggle{display:inline-flex;border:1px solid var(--line-2);border-radius:6px;overflow:hidden}
 .lang-toggle button{background:var(--panel);border:0;padding:6px 12px;color:var(--ink-soft);font-size:13px;font-weight:500;min-height:36px}
 .lang-toggle button.active{background:var(--accent);color:#fff}
+.save-btn{background:var(--panel);border:1px solid var(--line-2);border-radius:6px;padding:6px 14px;color:var(--ink-soft);font-size:13px;font-weight:500;min-height:36px;cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+.save-btn:hover{background:#f9fafb;color:var(--ink)}
+.save-btn.saved{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
 .menu-btn{display:none;background:none;border:1px solid var(--line-2);border-radius:6px;padding:8px 12px;font-size:18px;min-height:44px;min-width:44px}
 @media(max-width:880px){.menu-btn{display:inline-block}}
 
@@ -315,6 +318,7 @@ hr.soft{border:0;border-top:1px solid var(--line);margin:18px 0}
   </div>
   <div class="header-actions">
     <button class="menu-btn" id="menuBtn" aria-label="Menu">☰</button>
+    <button class="save-btn" id="saveBtn" onclick="manualSave()" data-i18n="saveBtn" title="Save your progress">Save</button>
     <div class="lang-toggle" role="group" aria-label="Language">
       <button id="langEn" class="active" onclick="setLang('en')">EN</button>
       <button id="langEs" onclick="setLang('es')">ES</button>
@@ -573,7 +577,7 @@ hr.soft{border:0;border-top:1px solid var(--line);margin:18px 0}
   </ul>
 
   <h3 data-i18n="practiceChallengeH" style="margin-top:32px">Practice &amp; Challenge</h3>
-  <p data-i18n="practiceChallengeP">Test your understanding. Use the <i>Show hint</i> and <i>Show model answer</i> buttons if you get stuck. Free-response answers are saved and added to your <b>Compile My Answers</b> export.</p>
+  <p data-i18n="practiceP">Test your understanding. Use the <i>Show model answer</i> button if you get stuck. Free-response answers are saved and added to your <b>Compile My Answers</b> export.</p>
   <div id="glycolysisQuestions"></div>
 
   <p style="margin-top:18px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
@@ -623,7 +627,7 @@ hr.soft{border:0;border-top:1px solid var(--line);margin:18px 0}
   </div>
 
   <h3 data-i18n="practiceChallengeH" style="margin-top:32px">Practice &amp; Challenge</h3>
-  <p data-i18n="practiceChallengeP">Test your understanding. Use the <i>Show hint</i> and <i>Show model answer</i> buttons if you get stuck. Free-response answers are saved and added to your <b>Compile My Answers</b> export.</p>
+  <p data-i18n="practiceP">Test your understanding. Use the <i>Show model answer</i> button if you get stuck. Free-response answers are saved and added to your <b>Compile My Answers</b> export.</p>
   <div id="krebsQuestions"></div>
 
   <p style="margin-top:18px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
@@ -973,6 +977,18 @@ let state = {
 function saveState(){
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e){}
 }
+function manualSave(){
+  saveState();
+  const btn = document.getElementById('saveBtn');
+  if(!btn) return;
+  btn.classList.add('saved');
+  btn.textContent = t('savedToast');
+  clearTimeout(window.__saveToastTimer);
+  window.__saveToastTimer = setTimeout(() => {
+    btn.classList.remove('saved');
+    btn.textContent = t('saveBtn');
+  }, 1500);
+}
 function loadState(){
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -1057,6 +1073,9 @@ const T = {
     glyNet3: "<b>2 pyruvate</b> molecules → enter mitochondrion if O<sub>2</sub> is present",
     practiceChallengeH: "Practice & Challenge",
     practiceChallengeP: "Test your understanding. Use the <i>Show hint</i> and <i>Show model answer</i> buttons if you get stuck. Free-response answers are saved and added to your <b>Compile My Answers</b> export.",
+    practiceP: "Test your understanding. Use the <i>Show model answer</i> button if you get stuck. Free-response answers are saved and added to your <b>Compile My Answers</b> export.",
+    saveBtn: "Save",
+    savedToast: "Saved ✓",
     /* Krebs */
     krebsTitle: "Link Reaction & Krebs Cycle",
     krebsSub: "Stages 2 & 3 · Mitochondrial matrix",
@@ -1238,6 +1257,9 @@ const T = {
     glyNet3: "<b>2 moléculas de piruvato</b> → entran en la mitocondria si hay O<sub>2</sub>",
     practiceChallengeH: "Práctica y reto",
     practiceChallengeP: "Pon a prueba tu comprensión. Usa los botones <i>Mostrar pista</i> y <i>Mostrar modelo</i> si te atascas. Las respuestas abiertas se guardan y se incluyen en tu exportación de <b>Compilar respuestas</b>.",
+    practiceP: "Pon a prueba tu comprensión. Usa el botón <i>Mostrar modelo</i> si te atascas. Las respuestas abiertas se guardan y se incluyen en tu exportación de <b>Compilar respuestas</b>.",
+    saveBtn: "Guardar",
+    savedToast: "Guardado ✓",
     /* Krebs */
     krebsTitle: "Reacción de Transición y Ciclo de Krebs",
     krebsSub: "Etapas 2 y 3 · Matriz mitocondrial",
@@ -1582,23 +1604,6 @@ const SECTION_QUESTIONS = {
         hint:{en:"If the final acceptor is missing, trace the effects backward through the chain.",es:"Si falta el aceptor final, sigue los efectos hacia atrás a lo largo de la cadena."},
         model:{en:"Without oxygen, electrons cannot leave Complex IV and back up through the entire chain. Electron transport halts, so no protons are pumped, the gradient dissipates, and ATP synthase stops. The cell must rely on fermentation (glycolysis only), producing just 2 ATP per glucose instead of ~30–32.",es:"Sin oxígeno, los electrones no pueden salir del Complejo IV y se acumulan a lo largo de la cadena. El transporte de electrones se detiene, no se bombean protones, el gradiente se disipa y la ATP sintasa para. La célula debe depender de la fermentación (solo glucólisis), produciendo solo 2 ATP por glucosa en lugar de ~30–32."} }
     ],
-    challengeMcq: [
-      { id:"etc-c1", q:{en:"A researcher adds a drug that blocks ATP synthase. What is the most immediate effect?",es:"Un investigador añade un fármaco que bloquea la ATP sintasa. ¿Cuál es el efecto más inmediato?"}, opts:[{en:"O₂ consumption increases",es:"Aumenta el consumo de O₂"},{en:"NADH production stops",es:"Se detiene la producción de NADH"},{en:"The proton gradient dissipates",es:"El gradiente de protones se disipa"},{en:"H⁺ accumulates and electron transport slows",es:"H⁺ se acumula y el transporte de electrones se ralentiza"}], correct:3,
-        hint:{en:"If H⁺ cannot flow back through ATP synthase, what happens to the gradient?",es:"Si H⁺ no puede regresar por la ATP sintasa, ¿qué pasa con el gradiente?"},
-        exp:{en:"Blocking ATP synthase prevents H⁺ from returning to the matrix. The gradient becomes so steep that pumping more H⁺ becomes energetically unfavourable, slowing electron transport.",es:"Bloquear la ATP sintasa impide que H⁺ regrese a la matriz. El gradiente se vuelve tan pronunciado que bombear más H⁺ es energéticamente desfavorable, ralentizando el transporte de electrones."} },
-      { id:"etc-c2", q:{en:"An uncoupling agent makes the inner membrane permeable to H⁺. Predict the effect on ATP production and O₂ consumption.",es:"Un agente desacoplador vuelve la membrana interna permeable al H⁺. Predice el efecto en la producción de ATP y el consumo de O₂."}, opts:[{en:"Both increase",es:"Ambos aumentan"},{en:"ATP decreases, O₂ consumption increases",es:"El ATP disminuye, el consumo de O₂ aumenta"},{en:"Both decrease",es:"Ambos disminuyen"},{en:"ATP increases, O₂ decreases",es:"El ATP aumenta, el O₂ disminuye"}], correct:1,
-        hint:{en:"If H⁺ leaks freely, does ATP synthase still work? And without gradient back-pressure, what happens to electron transport speed?",es:"Si H⁺ se filtra libremente, ¿la ATP sintasa sigue funcionando? Y sin contrapresión del gradiente, ¿qué pasa con la velocidad del transporte?"},
-        exp:{en:"H⁺ leaks back without going through ATP synthase, so no ATP is made. But without gradient back-pressure, electron transport runs faster, consuming more O₂. Energy is released as heat.",es:"H⁺ regresa sin pasar por la ATP sintasa, así que no se produce ATP. Pero sin contrapresión del gradiente, el transporte de electrones se acelera y consume más O₂. La energía se libera como calor."} },
-      { id:"etc-c3", q:{en:"Cyanide binds to Complex IV. How does this differ from blocking ATP synthase?",es:"El cianuro se une al Complejo IV. ¿En qué se diferencia esto de bloquear la ATP sintasa?"}, opts:[{en:"Cyanide increases ATP production",es:"El cianuro aumenta la producción de ATP"},{en:"Blocking ATP synthase stops electron flow; cyanide does not",es:"Bloquear la ATP sintasa detiene el flujo de electrones; el cianuro no"},{en:"Both stop ATP, but cyanide also halts all electron flow",es:"Ambos detienen el ATP, pero el cianuro también detiene todo el flujo de electrones"},{en:"They have identical effects",es:"Tienen efectos idénticos"}], correct:2,
-        hint:{en:"Complex IV is the last step of electron flow. ATP synthase is a separate enzyme. What does blocking each one stop?",es:"El Complejo IV es el último paso del flujo de electrones. La ATP sintasa es una enzima separada. ¿Qué detiene cada bloqueo?"},
-        exp:{en:"Cyanide blocks Complex IV directly, halting ALL electron flow and ALL proton pumping. Blocking ATP synthase only prevents proton flow through the enzyme; electrons still flow (slowly) and the gradient persists.",es:"El cianuro bloquea el Complejo IV directamente, deteniendo TODO el flujo de electrones y TODO el bombeo de protones. Bloquear la ATP sintasa solo impide el flujo de protones a través de la enzima; los electrones siguen fluyendo (lentamente) y el gradiente persiste."} },
-      { id:"etc-c4", q:{en:"Brown adipose tissue contains a protein that allows H⁺ to leak across the inner membrane. What is the biological significance?",es:"El tejido adiposo pardo contiene una proteína que permite al H⁺ filtrarse a través de la membrana interna. ¿Cuál es su importancia biológica?"}, opts:[{en:"It stores energy as fat",es:"Almacena energía como grasa"},{en:"It produces more NADH",es:"Produce más NADH"},{en:"It increases ATP yield",es:"Aumenta el rendimiento de ATP"},{en:"It generates heat instead of ATP for thermoregulation",es:"Genera calor en lugar de ATP para la termorregulación"}], correct:3,
-        hint:{en:"If protons bypass ATP synthase, where does the energy go?",es:"Si los protones evitan la ATP sintasa, ¿adónde va la energía?"},
-        exp:{en:"This uncoupling protein (UCP1) allows H⁺ to flow back without making ATP. The energy is released as heat — this is how newborn humans and hibernating animals maintain body temperature (non-shivering thermogenesis).",es:"Esta proteína desacopladora (UCP1) permite que el H⁺ regrese sin producir ATP. La energía se libera como calor — así mantienen la temperatura corporal los recién nacidos y los animales en hibernación (termogénesis sin escalofríos)."} },
-      { id:"etc-c5", q:{en:"The ETC is conserved across Bacteria, Archaea, and Eukarya. What does this suggest?",es:"La CTE está conservada en Bacteria, Archaea y Eukarya. ¿Qué sugiere esto?"}, opts:[{en:"The ETC was present in the last universal common ancestor (LUCA)",es:"La CTE estaba presente en el último antepasado común universal (LUCA)"},{en:"The ETC evolved independently in each domain",es:"La CTE evolucionó de forma independiente en cada dominio"},{en:"The ETC only evolved in eukaryotes",es:"La CTE solo evolucionó en los eucariotas"},{en:"The ETC is a recent adaptation",es:"La CTE es una adaptación reciente"}], correct:0,
-        hint:{en:"If all three domains share it, when must it have first appeared?",es:"Si los tres dominios la comparten, ¿cuándo debió de aparecer por primera vez?"},
-        exp:{en:"Conservation across all domains of life strongly suggests the ETC was present in LUCA ~3.8 billion years ago. It is one of the most ancient biological processes on Earth.",es:"La conservación en todos los dominios sugiere fuertemente que la CTE estaba presente en LUCA hace ~3.800 millones de años. Es uno de los procesos biológicos más antiguos de la Tierra."} }
-    ],
     challengeFrq: [
       { id:"etc-cf1a", topic:{en:"ETC inhibitors vs. uncouplers",es:"Inhibidores de la CTE vs. desacopladores"}, label:"a", cmd:{en:"Compare",es:"Compara"},
         prompt:{en:"<strong>Compare</strong> the effects of an ETC inhibitor (blocking Complex III) with an uncoupler (making the membrane permeable to H⁺) on: (1) the proton gradient, (2) electron transport rate, and (3) ATP production.",es:"<strong>Compara</strong> los efectos de un inhibidor de la CTE (que bloquea el Complejo III) con un desacoplador (que vuelve la membrana permeable al H⁺) sobre: (1) el gradiente de protones, (2) la velocidad del transporte de electrones y (3) la producción de ATP."},
@@ -1636,7 +1641,7 @@ const SECTIONS = [
   { id:"aerobic", label_en:"Aerobic Overview", label_es:"Visión Aerobia" },
   { id:"glycolysis", label_en:"Glycolysis", label_es:"Glucólisis" },
   { id:"krebs", label_en:"Link & Krebs", label_es:"Transición y Krebs" },
-  { id:"etc", label_en:"ETC & Chemiosmosis", label_es:"CTE y Quimiosmosis", hl:true },
+  { id:"etc", label_en:"ETC & Chemiosmosis", label_es:"CTE y Quimiosmosis" },
   { id:"fermentation", label_en:"Fermentation", label_es:"Fermentación" },
   { id:"lab", label_en:"Yeast Fermentation Lab", label_es:"Lab. Fermentación" },
   { id:"glossary", label_en:"Glossary", label_es:"Glosario" },
