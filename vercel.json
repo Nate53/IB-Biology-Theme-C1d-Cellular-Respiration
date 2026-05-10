@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/theme-c-c1d-cell-respiration.html" }
+    { "source": "/", "destination": "/theme-c-c1d-cell-respiration" }
   ],
   "cleanUrls": true
 }
